@@ -84,6 +84,7 @@ const emit = (upsServices, io) => {
 const StrapIO = (strapi, options) => {
   const { Pool } = require("pg");
   const { createAdapter } = require("@socket.io/postgres-adapter");
+  const { Emitter } = require("@socket.io/postgres-emitter");
   const io = require("socket.io")(strapi.server, options);
 
   const pool = new Pool({
@@ -101,6 +102,8 @@ const StrapIO = (strapi, options) => {
       payload     bytea
     );
   `);
+  
+  const emitter = new Emitter(pool);
 
   // loading middleware ordered
   io.use(handshake);
@@ -121,6 +124,7 @@ const StrapIO = (strapi, options) => {
   return {
     emit: emit(getUpServices(strapi), io),
     emitRaw: (room, event, data) => io.sockets.in(room).emit(event, data),
+    emitAllRaw: (room, event, data) => emitter.to(room).emit(event, data),
   };
 };
 
